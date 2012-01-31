@@ -4,16 +4,33 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 0.1
+Version: 0.2
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
 
 === RELEASE NOTES ===
 2009-07-29 - v0.1 - first version
+2012-01-31 - v0.2 - Fixed issue with textarea in the widget
+*/
+/*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License, version 2, as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 set_time_limit(0);
+
 global $wpdb;
 
 global $smirc_db_version;
@@ -50,7 +67,6 @@ if (!function_exists("absint")) {
 /**
  * Request Handler
  */
-
 if (!function_exists('smirc_request_handler')) {
     function smirc_request_handler() {
 
@@ -175,7 +191,7 @@ if (!function_exists('smirc_displayOptions')) {
 		 	 	<label for="smirc_enable_alert">Enable Alerts</label>
 		 	</th>
 		 	<td>
-                <input name="smirc_enable_alert"  id="smirc_enable_alert" type="checkbox" value = "true" <? echo checked($smirc_enable_alert_v, true) ?>  /> (If enabled users can subscribe for alerts)
+                <input name="smirc_enable_alert"  id="smirc_enable_alert" type="checkbox" value = "true" <? echo checked(true, $smirc_enable_alert_v) ?>  /> (If enabled users can subscribe for alerts)
 		 	</td>
 		 </tr>
 
@@ -436,55 +452,58 @@ if(!function_exists('smirc_add_menu')) {
 }
 
 /**
- * Enter description here...
+ * Widget init function
  *
+ * @return <type>
  */
+function smirc_widget_wp_irc_init() {
 
-    function smirc_widget_wp_irc_init() {
+    if(!function_exists('register_sidebar_widget')) { return; }
+    function smirc_widget_wp_irc($args) {
 
-        if(!function_exists('register_sidebar_widget')) { return; }
-        function smirc_widget_wp_irc($args) {
+        extract($args);
+        $widget_options = get_option('widget_wp_irc');
+        $widget_title = $widget_options['title'];
+        $widget_content = $widget_options['content'];
 
-            extract($args);
-            $widget_options = get_option('widget_wp_irc');
-            $widget_title = $widget_options['title'];
-            $widget_content = $widget_options['content'];
-            
-            echo $before_widget . $before_title . $widget_title . $after_title;
-            smirc_display_wp_irc($widget_content);
-            echo $after_widget;
+        echo $before_widget . $before_title . $widget_title . $after_title;
+        smirc_display_wp_irc($widget_content);
+        echo $after_widget;
 
-        }
-
-		function smirc_widget_wp_irc_control() {
-	        $options = $newoptions = get_option('widget_wp_irc');
-	        if ( $_POST["wp-irc-submit"] ) {
-	                $newoptions['title'] = strip_tags(stripslashes($_POST["wp-irc-title"]));
-	                $newoptions['content'] = strip_tags(stripslashes($_POST["wp-irc-content"]));
-	        }
-	        if ( $options != $newoptions ) {
-	                $options = $newoptions;
-	                update_option('widget_wp_irc', $options);
-	        }
-	        $title = attribute_escape($options['title']);
-	        $content = attribute_escape($options['content']);
-		?>
-            <p>
-            <label for="wp-irc-title"><?php _e('Title:'); ?><br />
-                <input style="width: 250px;" id="wp-irc-title" name="wp-irc-title" type="text" value="<?php echo $title; ?>" />
-            </label>
-            <label for="wp-irc-content"><?php _e('Content:'); ?>
-                <textarea name="wp-irc-content" id="wp-irc-content" cols="20" rows="5" class="widefat">There are currently [count] people in [channel]</textarea>
-            </label>
-            <?php _e('You can use the following template tags [count], [channel], [server]'); ?>
-            </p>
-            <input type="hidden" id="wp-irc-submit" name="wp-irc-submit" value="1" />
-		<?php
-		}
-		
-    	register_sidebar_widget('wp-irc', 'smirc_widget_wp_irc');
-    	register_widget_control('wp-irc', 'smirc_widget_wp_irc_control', 300, 100);
     }
+
+    function smirc_widget_wp_irc_control() {
+        $options = $newoptions = get_option('widget_wp_irc');
+        if ( $_POST["wp-irc-submit"] ) {
+                $newoptions['title'] = strip_tags(stripslashes($_POST["wp-irc-title"]));
+                $newoptions['content'] = strip_tags(stripslashes($_POST["wp-irc-content"]));
+        }
+        if ( $options != $newoptions ) {
+                $options = $newoptions;
+                update_option('widget_wp_irc', $options);
+        }
+        $title = attribute_escape($options['title']);
+        $content = attribute_escape($options['content']);
+        if ($content == '') {
+            $content = 'There are currently [count] people in [channel]';
+        }
+    ?>
+        <p>
+        <label for="wp-irc-title"><?php _e('Title:'); ?><br />
+            <input style="width: 250px;" id="wp-irc-title" name="wp-irc-title" type="text" value="<?php echo $title; ?>" />
+        </label>
+        <label for="wp-irc-content"><?php _e('Content:'); ?>
+            <textarea name="wp-irc-content" id="wp-irc-content" cols="20" rows="5" class="widefat"><?php echo $content;?></textarea>
+        </label>
+        <?php _e('You can use the following template tags [count], [channel], [server]'); ?>
+        </p>
+        <input type="hidden" id="wp-irc-submit" name="wp-irc-submit" value="1" />
+    <?php
+    }
+
+    register_sidebar_widget('wp-irc', 'smirc_widget_wp_irc');
+    register_widget_control('wp-irc', 'smirc_widget_wp_irc_control', 300, 100);
+}
 
 /**
  * Schdule the event
@@ -512,7 +531,6 @@ function smirc_install ()     {
 
       add_option("smmf_db_version", $smirc_db_version);
    }
-
 
     // Schedule the event
 	wp_schedule_event( time(), 'wp-irc', 'smirc_event_function_hook' );

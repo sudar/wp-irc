@@ -4,14 +4,14 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 0.2
+Version: 0.3
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
 
 === RELEASE NOTES ===
 2009-07-29 - v0.1 - first version
-2012-01-31 - v0.2 - Fixed issue with textarea in the widget
+012-01-31 - v0.2 - Fixed issue with textarea in the widget
 */
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
 
@@ -29,6 +29,7 @@ Author URI: http://sudarmuthu.com/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+// so that the script doesn't timeout
 set_time_limit(0);
 
 global $wpdb;
@@ -54,16 +55,6 @@ if (!defined('PLUGIN_PATH'))
 
 define('SM_IRC_INC_URL', PLUGIN_URL . dirname(plugin_basename(__FILE__)) . '/wp-irc-ajax.php');
 
-/**
- * For backward compatabliity with 2.3
- * @param <type> $maybeint
- * @return <type>
- */
-if (!function_exists("absint")) {
-    function absint( $maybeint ) {
-          return abs( intval( $maybeint ) );
-    }
-}
 /**
  * Request Handler
  */
@@ -208,8 +199,8 @@ if (!function_exists('smirc_displayOptions')) {
 		</div>
         
 <?php
-    // Display credits in Footer
-    add_action( 'in_admin_footer', 'smirc_admin_footer' );
+    // Display credits in IRCter
+    add_action( 'in_admin_ircter', 'smirc_admin_ircter' );
 
     }
 }
@@ -580,9 +571,9 @@ function smirc_filter_plugin_actions($links, $file) {
 }
 
 /**
- * Adds Footer links. Based on http://striderweb.com/nerdaphernalia/2008/06/give-your-wordpress-plugin-credit/
+ * Adds IRCter links. Based on http://striderweb.com/nerdaphernalia/2008/06/give-your-wordpress-plugin-credit/
  */
-function smirc_admin_footer() {
+function smirc_admin_ircter() {
 	$plugin_data = get_plugin_data( __FILE__ );
     printf('%1$s ' . __("plugin") .' | ' . __("Version") . ' %2$s | '. __('by') . ' %3$s<br />', $plugin_data['Title'], $plugin_data['Version'], $plugin_data['Author']);
 }
@@ -602,4 +593,126 @@ add_filter('cron_schedules', 'smirc_add_schedule');
 add_action( 'wp_print_scripts', 'smirc_scripts');
 add_action( 'wp_head', 'smirc_head' );
 
+/**
+ * Adds IRC_Widget widget
+ *
+ * @package default
+ * @subpackage default
+ * @author Sudar
+ */
+class IRC_Widget extends WP_Widget {
+
+    /**
+    * Register widget with WordPress.
+    */
+    public function __construct() {
+        parent::__construct(
+            'irc_widget', // Base ID
+            'IRC_Widget', // Name
+            array( 'description' => __( 'A IRC Widget', 'wp-irc' ), ) // Args
+        );
+    }
+
+    /**
+    * Front-end display of widget.
+    *
+    * @see WP_Widget::widget()
+    *
+    * @param array $args     Widget arguments.
+    * @param array $instance Saved values from database.
+    */
+    public function widget( $args, $instance ) {
+        extract( $args );
+        $title = apply_filters( 'widget_title', $instance['title'] );
+
+        $widget_options = get_option('widget_wp_irc');
+        $widget_title = $widget_options['title'];
+        $widget_content = $widget_options['content'];
+
+        echo $before_widget;
+        if ( ! empty( $title ) ) {
+            echo $before_title . $title . $after_title;
+        }
+        smirc_display_wp_irc($widget_content);
+        echo $after_widget;
+    }
+
+    /**
+    * Sanitize widget form values as they are saved.
+    *
+    * @see WP_Widget::update()
+    *
+    * @param array $new_instance Values just sent to be saved.
+    * @param array $old_instance Previously saved values from database.
+    *
+    * @return array Updated safe values to be saved.
+    */
+    public function update( $new_instance, $old_instance ) {
+        $instance = array();
+        $instance['title'] = strip_tags( $new_instance['title'] );
+
+        return $instance;
+    }
+
+    /**
+    * Back-end widget form.
+    *
+    * @see WP_Widget::form()
+    *
+    * @param array $instance Previously saved values from database.
+    */
+    public function form( $instance ) {
+        if ( isset( $instance[ 'title' ] ) ) {
+            $title = $instance[ 'title' ];
+        }
+        else {
+            $title = __( 'New title', 'wp-irc' );
+        }
+
+        $options = $newoptions = get_option('widget_wp_irc');
+        if ( $_POST["wp-irc-submit"] ) {
+                $newoptions['title'] = strip_tags(stripslashes($_POST["wp-irc-title"]));
+                $newoptions['content'] = strip_tags(stripslashes($_POST["wp-irc-content"]));
+        }
+        if ( $options != $newoptions ) {
+                $options = $newoptions;
+                update_option('widget_wp_irc', $options);
+        }
+
+        if ( isset( $instance[ 'content' ] ) ) {
+            $content = $instance[ 'content' ];
+        }
+        else {
+            $content = __( 'There are currently [count] people in [channel]', 'wp-irc' );
+        }
+
+?>
+        <p>
+        <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'content' ); ?>"><?php _e( 'content:' ); ?></label> 
+        <textarea class="widefat" id="<?php echo $this->get_field_id( 'content' ); ?>" name="<?php echo $this->get_field_name( 'content' ); ?>" ><?php echo esc_attr( $content ); ?></textarea>
+        <?php _e('You can use the following template tags [count], [channel], [server]'); ?>
+        </p>
+<?php 
+    }
+
+} // class IRC_Widget
+
+// register IRC_Widget widget
+add_action( 'widgets_init', create_function( '', 'register_widget( "IRC_Widget" );' ) );
+
+/**
+ * For backward compatabliity with 2.3
+ * @param <type> $maybeint
+ * @return <type>
+ */
+if (!function_exists("absint")) {
+    function absint( $maybeint ) {
+          return abs( intval( $maybeint ) );
+    }
+}
 ?>

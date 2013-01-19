@@ -649,7 +649,15 @@ class IRC_Widget extends WP_Widget {
     */
     public function update( $new_instance, $old_instance ) {
         $instance = array();
+
         $instance['title'] = strip_tags( $new_instance['title'] );
+        $instance['server'] = strip_tags( $new_instance['server'] );
+        $instance['port'] = intval( $new_instance['port'] );
+        $instance['channel'] = strip_tags( $new_instance['channel'] );
+        $instance['nickname'] = strip_tags( $new_instance['nickname'] );
+        $instance['content'] = ( $new_instance['content'] );
+        $instance['interval'] = intval( $new_instance['interval'] );
+        $instance['alerts'] = (bool) $new_instance['alerts'];
 
         return $instance;
     }
@@ -669,21 +677,53 @@ class IRC_Widget extends WP_Widget {
             $title = __( 'New title', 'wp-irc' );
         }
 
-        $options = $newoptions = get_option('widget_wp_irc');
-        if ( $_POST["wp-irc-submit"] ) {
-                $newoptions['title'] = strip_tags(stripslashes($_POST["wp-irc-title"]));
-                $newoptions['content'] = strip_tags(stripslashes($_POST["wp-irc-content"]));
-        }
-        if ( $options != $newoptions ) {
-                $options = $newoptions;
-                update_option('widget_wp_irc', $options);
-        }
-
         if ( isset( $instance[ 'content' ] ) ) {
             $content = $instance[ 'content' ];
         }
         else {
             $content = __( 'There are currently [count] people in [channel]', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'server' ] ) ) {
+            $server = $instance[ 'server' ];
+        }
+        else {
+            $server = __( 'irc.freenode.net', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'port' ] ) ) {
+            $port = $instance[ 'port' ];
+        }
+        else {
+            $port = __( '6667', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'channel' ] ) ) {
+            $channel = $instance[ 'channel' ];
+        }
+        else {
+            $channel = __( 'wordpress', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'nickname' ] ) ) {
+            $nickname = $instance[ 'nickname' ];
+        }
+        else {
+            $nickname = __( 'wp-irc-bot', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'interval' ] ) ) {
+            $interval = $instance[ 'interval' ];
+        }
+        else {
+            $interval = __( '5', 'wp-irc' );
+        }
+
+        if ( isset( $instance[ 'alerts' ] ) ) {
+            $alerts = $instance[ 'alerts' ];
+        }
+        else {
+            $alerts = FALSE;
         }
 
 ?>
@@ -693,10 +733,41 @@ class IRC_Widget extends WP_Widget {
         </p>
 
         <p>
-        <label for="<?php echo $this->get_field_id( 'content' ); ?>"><?php _e( 'content:' ); ?></label> 
+        <label for="<?php echo $this->get_field_id( 'server' ); ?>"><?php _e( 'Server:' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'server' ); ?>" name="<?php echo $this->get_field_name( 'server' ); ?>" type="text" value="<?php echo esc_attr( $server ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'port' ); ?>"><?php _e( 'Port:' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'port' ); ?>" name="<?php echo $this->get_field_name( 'port' ); ?>" type="text" value="<?php echo esc_attr( $port ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'channel' ); ?>"><?php _e( 'Channel:' ); ?></label> 
+        #<input class="widefat" id="<?php echo $this->get_field_id( 'channel' ); ?>" name="<?php echo $this->get_field_name( 'channel' ); ?>" type="text" value="<?php echo esc_attr( $channel ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'nickname' ); ?>"><?php _e( 'Nickname:' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'nickname' ); ?>" name="<?php echo $this->get_field_name( 'nickname' ); ?>" type="text" value="<?php echo esc_attr( $nickname ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'content' ); ?>"><?php _e( 'Content:' ); ?></label> 
         <textarea class="widefat" id="<?php echo $this->get_field_id( 'content' ); ?>" name="<?php echo $this->get_field_name( 'content' ); ?>" ><?php echo esc_attr( $content ); ?></textarea>
         <?php _e('You can use the following template tags [count], [channel], [server]'); ?>
         </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'interval' ); ?>"><?php _e( 'Interval: (in minutes)' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'interval' ); ?>" name="<?php echo $this->get_field_name( 'interval' ); ?>" type="text" value="<?php echo esc_attr( $interval ); ?>" />
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'alerts' ); ?>"><?php _e( 'alerts:' ); ?></label> 
+        <input class="checkbox" id="<?php echo $this->get_field_id( 'alerts' ); ?>" name="<?php echo $this->get_field_name( 'alerts' ); ?>" type="checkbox" value="true" <?php checked($alerts, true);  ?> />
+        </p>
+
 <?php 
     }
 
@@ -704,15 +775,4 @@ class IRC_Widget extends WP_Widget {
 
 // register IRC_Widget widget
 add_action( 'widgets_init', create_function( '', 'register_widget( "IRC_Widget" );' ) );
-
-/**
- * For backward compatabliity with 2.3
- * @param <type> $maybeint
- * @return <type>
- */
-if (!function_exists("absint")) {
-    function absint( $maybeint ) {
-          return abs( intval( $maybeint ) );
-    }
-}
 ?>

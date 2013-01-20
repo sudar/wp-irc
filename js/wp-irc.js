@@ -21,19 +21,4 @@ jQuery(document).ready(function () {
             }
         });
     });
-
-
-    jQuery("#irc_alert").hide();
-
-    jQuery("#get_alert").click(function (e) {
-        jQuery("#irc_alert").toggle();
-        e.preventDefault();
-    });
-
-    jQuery("#wp-irc-submit").click(function () {
-        //TODO: validation
-        jQuery.post("<?php echo SM_IRC_INC_URL; ?>", jQuery("#smirc_alert_form").serialize(), function (result) {
-            jQuery("#irc_alert").html(result);
-        });
-    });
 });

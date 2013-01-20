@@ -4,7 +4,7 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 0.3
+Version: 1.0
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
@@ -12,6 +12,8 @@ Author URI: http://sudarmuthu.com/
 === RELEASE NOTES ===
 2009-07-29 - v0.1 - first version
 2012-01-31 - v0.2 - Fixed issue with textarea in the widget
+2013-01-21 - v1.0 - (Dev Time: 20 hours)
+                  - Complete rewrite and added support for AJAX
 */
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
 
@@ -29,6 +31,12 @@ Author URI: http://sudarmuthu.com/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+//TODO: Create a settings page where people can test connection
+//TODO: Add support for caching
+//TODO: Honor refresh interval
+//TODO: Add support for alerts
+//TODO: Add support for shortcode
+
 // so that the script doesn't timeout
 set_time_limit(0);
 
@@ -36,7 +44,6 @@ set_time_limit(0);
  * The main Plugin class
  *
  * @package WP IRC
- * @subpackage default
  * @author Sudar
  */
 class WP_IRC {
@@ -48,7 +55,7 @@ class WP_IRC {
 
     /**
      * Initalize the plugin by registering the hooks
-      */
+     */
     function __construct() {
 
         // Load localization domain
@@ -98,36 +105,29 @@ class WP_IRC {
     function add_script() {
         wp_enqueue_script($this->js_handle, plugins_url('/js/wp-irc.js', __FILE__), array('jquery'), $this->version, TRUE);
 
-        // AJAX messages
+        // JavaScript messages
         $msg = array(
             'refreshcountfailed' => __('Unable to fetch user count. Kindly try after sometime', 'wp-irc')
         );
         $translation_array = array( 'ajaxurl' => admin_url( 'admin-ajax.php' ), 'refreshNonce' => wp_create_nonce($this->refresh_nonce), 'msg' => $msg );
         wp_localize_script( $this->js_handle, $this->js_variable, $translation_array );
     }
-
-    // PHP4 compatibility
-    function WP_IRC() {
-        $this->__construct();
-    }
 }
 
 // Start this plugin once all other plugins are fully loaded
 add_action( 'init', 'WP_IRC' ); function WP_IRC() { global $WP_IRC; $WP_IRC = new WP_IRC(); }
 
-
 /**
  * Adds IRC_Widget widget
  *
  * @package default
- * @subpackage default
  * @author Sudar
  */
 class IRC_Widget extends WP_Widget {
 
     /**
-    * Register widget with WordPress.
-    */
+     * Register widget with WordPress.
+     */
     public function __construct() {
         parent::__construct(
             'irc_widget', // Base ID
@@ -137,13 +137,13 @@ class IRC_Widget extends WP_Widget {
     }
 
     /**
-    * Front-end display of widget.
-    *
-    * @see WP_Widget::widget()
-    *
-    * @param array $args     Widget arguments.
-    * @param array $instance Saved values from database.
-    */
+     * Front-end display of widget.
+     *
+     * @see WP_Widget::widget()
+     *
+     * @param array $args     Widget arguments.
+     * @param array $instance Saved values from database.
+     */
     public function widget( $args, $instance ) {
         extract( $args );
         $title = apply_filters( 'widget_title', $instance['title'] );
@@ -152,7 +152,6 @@ class IRC_Widget extends WP_Widget {
         if ( ! empty( $title ) ) {
             echo $before_title . $title . $after_title;
         }
-        //echo $this->id . "<br>";
         $this->getWidgetContent($instance);
         echo $after_widget;
     }
@@ -164,35 +163,21 @@ class IRC_Widget extends WP_Widget {
     private function getWidgetContent($instance) {
 ?>
         <div id = "<?php echo $this->id; ?>" class = "irc_widget_id">
-            <img src="<?php echo esc_url( admin_url( 'images/wpspin_light.gif' ) ); ?>" class="ajax-loading list-ajax-loading" alt="" />
+            <img src="<?php echo esc_url( admin_url( 'images/wpspin_light.gif' ) ); ?>" class="ajax-loading list-ajax-loading" alt="content-loading" />
         </div>
 <?php      
-        if ($instance['alerts']) {
-?>
-            <p><a id = "get_alert" href="#">Get alert when ..</a></p>
-            <div id="irc_alert">
-                <form method="post" action = "<?php echo SM_IRC_INC_URL; ?>" id="smirc_alert_form">
-                    <label for ="alert_count">users count reach more than <input type ="text" name = "alert_count" id="alert_count" size="5" maxlength="5" /></label> <br /><br />
-                    <label for ="alert_name">Your name <input type ="text" name = "alert_name" id="alert_name" size="20" maxlength="25" /></label> <br />
-                    <label for ="alert_email">Email &nbsp; &nbsp; &nbsp; &nbsp; <input type ="text" name = "alert_email" id="alert_email" size="20" maxlength="30" /></label><br />
-                    <input type ="hidden" id="wp-irc-action" name = "wp-irc-action" value="wp-irc-add-alert" />
-                    <input type ="button" id="wp-irc-submit" name = "wp-irc-submit" value="Get Alert" />
-                </form>
-            </div>
-<?php
-        }
     }
 
     /**
-    * Sanitize widget form values as they are saved.
-    *
-    * @see WP_Widget::update()
-    *
-    * @param array $new_instance Values just sent to be saved.
-    * @param array $old_instance Previously saved values from database.
-    *
-    * @return array Updated safe values to be saved.
-    */
+     * Sanitize widget form values as they are saved.
+     *
+     * @see WP_Widget::update()
+     *
+     * @param array $new_instance Values just sent to be saved.
+     * @param array $old_instance Previously saved values from database.
+     *
+     * @return array Updated safe values to be saved.
+     */
     public function update( $new_instance, $old_instance ) {
         $instance = array();
 
@@ -203,73 +188,58 @@ class IRC_Widget extends WP_Widget {
         $instance['nickname'] = strip_tags( $new_instance['nickname'] );
         $instance['content'] = ( $new_instance['content'] );
         $instance['interval'] = intval( $new_instance['interval'] );
-        $instance['alerts'] = (bool) $new_instance['alerts'];
 
         return $instance;
     }
 
     /**
-    * Back-end widget form.
-    *
-    * @see WP_Widget::form()
-    *
-    * @param array $instance Previously saved values from database.
-    */
+     * Back-end widget form.
+     *
+     * @see WP_Widget::form()
+     *
+     * @param array $instance Previously saved values from database.
+     */
     public function form( $instance ) {
         if ( isset( $instance[ 'title' ] ) ) {
             $title = $instance[ 'title' ];
-        }
-        else {
+        } else {
             $title = __( 'New title', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'content' ] ) ) {
             $content = $instance[ 'content' ];
-        }
-        else {
+        } else {
             $content = __( 'There are currently [count] people in [channel]', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'server' ] ) ) {
             $server = $instance[ 'server' ];
-        }
-        else {
+        } else {
             $server = __( 'irc.freenode.net', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'port' ] ) ) {
             $port = $instance[ 'port' ];
-        }
-        else {
+        } else {
             $port = __( '6667', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'channel' ] ) ) {
             $channel = $instance[ 'channel' ];
-        }
-        else {
+        } else {
             $channel = __( 'wordpress', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'nickname' ] ) ) {
             $nickname = $instance[ 'nickname' ];
-        }
-        else {
+        } else {
             $nickname = __( 'wp-irc-bot', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'interval' ] ) ) {
             $interval = $instance[ 'interval' ];
-        }
-        else {
+        } else {
             $interval = __( '5', 'wp-irc' );
-        }
-
-        if ( isset( $instance[ 'alerts' ] ) ) {
-            $alerts = $instance[ 'alerts' ];
-        }
-        else {
-            $alerts = FALSE;
         }
 
 ?>
@@ -308,15 +278,8 @@ class IRC_Widget extends WP_Widget {
         <label for="<?php echo $this->get_field_id( 'interval' ); ?>"><?php _e( 'Interval: (in minutes)' ); ?></label> 
         <input class="widefat" id="<?php echo $this->get_field_id( 'interval' ); ?>" name="<?php echo $this->get_field_name( 'interval' ); ?>" type="text" value="<?php echo esc_attr( $interval ); ?>" />
         </p>
-
-        <p>
-        <label for="<?php echo $this->get_field_id( 'alerts' ); ?>"><?php _e( 'Enable Alerts:' ); ?></label> 
-        <input class="checkbox" id="<?php echo $this->get_field_id( 'alerts' ); ?>" name="<?php echo $this->get_field_name( 'alerts' ); ?>" type="checkbox" value="true" <?php checked($alerts, true);  ?> />
-        </p>
-
 <?php 
     }
-
 } // class IRC_Widget
 
 // register IRC_Widget widget
@@ -337,6 +300,7 @@ class IRC {
  * @return <type>
  */
     static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot") {
+        //TODO: Clean up this function
         $server = array(); //we will use an array to store all the server data.
         $count = 0;
         //Open the socket connection to the IRC server

@@ -1,10 +1,10 @@
 === wp-irc ===
 Contributors: sudar 
-Tags: irc, sidebar, widget, alert
-Requires at least: 2.8
-Tested up to: 3.3.1
+Tags: irc, sidebar, widget
+Requires at least: 3.2
+Tested up to: 3.5
 Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Stable tag: 0.2
+Stable tag: 0.3
 	
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 
@@ -12,13 +12,27 @@ Retrieves the number of people who are online in an IRC Channel, which can be di
 
 Well WP-IRC Plugin (for lack of a better name ;) ) can fetch the number of users online in any IRC channel and can be scheduled to auto refresh it every x.minutes. The count thus fetched can be displayed in the sidebar of your blog using a sidebar widget provided by the Plugin.
 
-You can also allow users to subscribe to email alerts like, alert me after x number of people has come online.
-
 More details about the Plugin can be found at the [Plugins Home page][1].
 
-### Support
+### Translation
+
+The pot file is available with the Plugin. If you are willing to do translation for the Plugin, use the pot file to create the .po files for your language and let me know. I will add it to the Plugin after giving credit to you.
+
+### Development and Support
+
+The development of the Plugin happens over at [github][6]. If you want to contribute to the Plugin, fork the [project at github][6] and send me a pull request.
+
+If you are not familiar with either git or Github then refer to this [guide to see how fork and send pull request](http://sudarmuthu.com/blog/contributing-to-project-hosted-in-github).
 
 Support for the Plugin is available from the [Plugin's home page][1]. If you have any questions or suggestions, do leave a comment there or contact me in [twitter][2].
+
+### TODO
+
+- Honor refresh interval
+- Add support for caching
+- Create a settings page where people can test connection
+- Add support for shortcode
+- Add support for alerts
 
 ### Stay updated
 
@@ -35,21 +49,24 @@ I would be posting updates about this Plugin in my [blog][3] and in [Twitter][2]
  [3]: http://sudarmuthu.com/blog
  [4]: http://sudarmuthu.com/wordpress
  [5]: http://sudarmuthu.com/feed
+ [6]: https://github.com/sudar/wp-irc
 
 == Installation ==
 
 Extract the zip file and just drop the contents in the wp-content/plugins/ directory of your WordPress installation and then activate the Plugin from Plugins page.
 
+After activation, go to the widgets configuration page. You should find the IRC Widget under available widget.
+
 == Changelog ==
-### Changelog
 
-** v0.1 (2009-07-29)
-
+### v0.1 (2009-07-29)
 *   Initial Version
 
-** v0.2 (2012-01-31)
-
+### v0.2 (2012-01-31)
 *   Fixed issue with textarea in the widget
+
+### v1.0 (2013-01-21) (Dev time: 20 hours)
+* Complete rewrite and added support for AJAX
 
 ==Readme Generator== 
 

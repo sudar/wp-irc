@@ -4,7 +4,7 @@ Tags: irc, sidebar, widget
 Requires at least: 3.2
 Tested up to: 3.5
 Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Stable tag: 0.3
+Stable tag: 1.0
 	
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 

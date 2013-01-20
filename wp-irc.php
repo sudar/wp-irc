@@ -13,7 +13,7 @@ Author URI: http://sudarmuthu.com/
 2009-07-29 - v0.1 - first version
 2012-01-31 - v0.2 - Fixed issue with textarea in the widget
 2013-01-21 - v1.0 - (Dev Time: 20 hours)
-                  - Complete rewrite and added support for AJAX
+                  - Complete rewrite and added support for AJAX with caching
 */
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
 
@@ -32,8 +32,6 @@ Author URI: http://sudarmuthu.com/
 */
 
 //TODO: Create a settings page where people can test connection
-//TODO: Add support for caching
-//TODO: Honor refresh interval
 //TODO: Add support for alerts
 //TODO: Add support for shortcode
 
@@ -85,7 +83,10 @@ class WP_IRC {
         $option = get_option('widget_irc_widget');
         $instance = $option[$widget_id];
 
-        $count = IRC::get_irc_channel_users($instance['server'], $instance['port'], $instace['channel'], $instance['nickname']);
+        if (false === ($count = get_transient($this->js_handle . $widget_id))) {
+            $count = IRC::get_irc_channel_users($instance['server'], $instance['port'], $instace['channel'], $instance['nickname']);
+            set_transient($this->js_handle . $widget_id, $count, $intance['interval'] * 60);
+        }
 
         $content = str_replace("[count]", $count, $instance['content']);
         $content = str_replace("[channel]", $instance["channel"], $content);

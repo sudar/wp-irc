@@ -28,8 +28,6 @@ Support for the Plugin is available from the [Plugin's home page][1]. If you hav
 
 ### TODO
 
-- Honor refresh interval
-- Add support for caching
 - Create a settings page where people can test connection
 - Add support for shortcode
 - Add support for alerts
@@ -66,7 +64,7 @@ After activation, go to the widgets configuration page. You should find the IRC 
 *   Fixed issue with textarea in the widget
 
 ### v1.0 (2013-01-21) (Dev time: 20 hours)
-* Complete rewrite and added support for AJAX
+* Complete rewrite and added support for AJAX with caching
 
 ==Readme Generator== 
 

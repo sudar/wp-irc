@@ -55,6 +55,10 @@ Extract the zip file and just drop the contents in the wp-content/plugins/ direc
 
 After activation, go to the widgets configuration page. You should find the IRC Widget under available widget.
 
+== Screenshots ==
+
+1. The following screenshot shows how the widget will be displayed
+
 == Changelog ==
 
 ### v0.1 (2009-07-29)

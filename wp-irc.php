@@ -4,7 +4,7 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 1.0
+Version: 1.1
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
@@ -14,6 +14,12 @@ Author URI: http://sudarmuthu.com/
 2012-01-31 - v0.2 - Fixed issue with textarea in the widget
 2013-01-21 - v1.0 - (Dev Time: 20 hours)
                   - Complete rewrite and added support for AJAX with caching
+2013-02-16 - v1.1 - (Paul Freund) 	- Fixed misspelled vairiables
+					- Improved IRC connection (including implementing RFC2812  specifications)
+					- [users] tag prints online users
+					- Verbose mode to join channel (to see invisible users), 
+					- Password now works
+
 */
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
 
@@ -72,7 +78,7 @@ class WP_IRC {
      * @return void
      */
     function refresh_count() {
-            
+
         if ( ! wp_verify_nonce( $_POST['nonce'], $this->refresh_nonce ) ) {
             die ( 'Are you trying something funny?');
         }
@@ -83,12 +89,14 @@ class WP_IRC {
         $option = get_option('widget_irc_widget');
         $instance = $option[$widget_id];
 
-        if (false === ($count = get_transient($this->js_handle . $widget_id))) {
-            $count = IRC::get_irc_channel_users($instance['server'], $instance['port'], $instace['channel'], $instance['nickname']);
-            set_transient($this->js_handle . $widget_id, $count, $intance['interval'] * 60);
+        if (false === ($users = get_transient($this->js_handle . $widget_id))) {
+            $users = IRC::get_irc_channel_users($instance['server'], $instance['port'], $instance['channel'], $instance['nickname'], $instance['password'], $instance['verbose']);
+            set_transient($this->js_handle . $widget_id, $users, $instance['interval']); 
         }
 
-        $content = str_replace("[count]", $count, $instance['content']);
+        $content = $instance['content'];
+        $content = str_replace("[users]", implode(" ",$users), $content);
+        $content = str_replace("[count]", count($users), $content);
         $content = str_replace("[channel]", $instance["channel"], $content);
         $content = str_replace("[server]", $instance["server"], $content);
 
@@ -187,6 +195,14 @@ class IRC_Widget extends WP_Widget {
         $instance['port'] = intval( $new_instance['port'] );
         $instance['channel'] = strip_tags( $new_instance['channel'] );
         $instance['nickname'] = strip_tags( $new_instance['nickname'] );
+        $instance['password'] = strip_tags( $new_instance['password'] );
+        
+        if( strip_tags( $new_instance['verbose'] ) == "verbose") {
+            $instance['verbose'] = true;
+        } else {
+            $instance['verbose'] = false;
+        }
+        
         $instance['content'] = ( $new_instance['content'] );
         $instance['interval'] = intval( $new_instance['interval'] );
 
@@ -210,7 +226,7 @@ class IRC_Widget extends WP_Widget {
         if ( isset( $instance[ 'content' ] ) ) {
             $content = $instance[ 'content' ];
         } else {
-            $content = __( 'There are currently [count] people in [channel]', 'wp-irc' );
+            $content = __( 'There are currently [count] people in [channel]: [users]', 'wp-irc' );
         }
 
         if ( isset( $instance[ 'server' ] ) ) {
@@ -236,12 +252,25 @@ class IRC_Widget extends WP_Widget {
         } else {
             $nickname = __( 'wp-irc-bot', 'wp-irc' );
         }
+        
+        if ( isset( $instance[ 'password' ] ) ) {
+            $password = $instance[ 'password' ];
+        } else {
+            $password = __( '', 'wp-irc' );
+        }     
+        
+        if ( isset( $instance[ 'verbose' ] ) ) {
+            $verbose = $instance[ 'verbose' ];
+        } else {
+            $verbose = __( 'false', 'wp-irc' );
+        }        
 
         if ( isset( $instance[ 'interval' ] ) ) {
             $interval = $instance[ 'interval' ];
         } else {
-            $interval = __( '5', 'wp-irc' );
+            $interval = __( '300', 'wp-irc' );
         }
+        
 
 ?>
         <p>
@@ -268,15 +297,26 @@ class IRC_Widget extends WP_Widget {
         <label for="<?php echo $this->get_field_id( 'nickname' ); ?>"><?php _e( 'Nickname:' ); ?></label> 
         <input class="widefat" id="<?php echo $this->get_field_id( 'nickname' ); ?>" name="<?php echo $this->get_field_name( 'nickname' ); ?>" type="text" value="<?php echo esc_attr( $nickname ); ?>" />
         </p>
+        
+        <p>
+        <label for="<?php echo $this->get_field_id( 'password' ); ?>"><?php _e( 'Passsword (only enter if required):' ); ?></label> 
+        <input class="widefat" id="<?php echo $this->get_field_id( 'password' ); ?>" name="<?php echo $this->get_field_name( 'password' ); ?>" type="text" value="<?php echo esc_attr( $password ); ?>" />
+        </p>        
 
         <p>
         <label for="<?php echo $this->get_field_id( 'content' ); ?>"><?php _e( 'Content:' ); ?></label> 
         <textarea class="widefat" id="<?php echo $this->get_field_id( 'content' ); ?>" name="<?php echo $this->get_field_name( 'content' ); ?>" ><?php echo esc_attr( $content ); ?></textarea>
-        <?php _e('You can use the following template tags [count], [channel], [server]'); ?>
+        <?php _e('You can use the following template tags [users], [count], [channel], [server]'); ?>
         </p>
 
         <p>
-        <label for="<?php echo $this->get_field_id( 'interval' ); ?>"><?php _e( 'Interval: (in minutes)' ); ?></label> 
+        <?php _e('If set to true, the bot joins the channel to see invisible users'); ?>
+        <br />
+        <input id="<?php echo $this->get_field_id( 'verbose' ); ?>" name="<?php echo $this->get_field_name( 'verbose' ); ?>" type="checkbox" <?php if($verbose) {echo "checked";} ?> value="verbose"><?php _e( ' Verbose' ); ?></input>
+        </p>
+
+        <p>
+        <label for="<?php echo $this->get_field_id( 'interval' ); ?>"><?php _e( 'Interval: (in seconds)' ); ?></label> 
         <input class="widefat" id="<?php echo $this->get_field_id( 'interval' ); ?>" name="<?php echo $this->get_field_name( 'interval' ); ?>" type="text" value="<?php echo esc_attr( $interval ); ?>" />
         </p>
 <?php 
@@ -300,70 +340,142 @@ class IRC {
  * @param <type> $nickname
  * @return <type>
  */
-    static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot") {
-        //TODO: Clean up this function
-        $server = array(); //we will use an array to store all the server data.
-        $count = 0;
-        //Open the socket connection to the IRC server
-        $fp = fsockopen($irc_server, $port, $errno, $errstr);
-        if($fp) {
-            //Ok, we have connected to the server, now we have to send the login commands.
+    static function is_irc_command_error($command)
+    {
+        if( intval($command) >= 400 && intval($command) <= 599 ) // 400 to 599 - Error commands
+            return true;
+            
+        if( (strpos($command, "ERR_") !== false) ) // Errors start with ERR_
+            return true;
+            
+        return false;
+    }
+ 
+    static function send_irc_command($socket, $command)
+    {
+        $command = $command."\n\r";
+        
+        if($socket)
+            @fwrite($socket, $command, strlen($command));
+    }
+    
+    static function connection_valid($socket)
+    {
+        flush(); 
+        return feof($socket) ? false : true;
+    }
+ 
+    static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot", $password = "", $verbose = false) 
+    {
+        $retVal = array();
 
-            @fwrite($fp, "PASS NOPASS\n\r", strlen("PASS NOPASS\n\r")); //Sends the password not needed for most servers
-            @fwrite($fp, "NICK $nickname\n\r", strlen("NICK $nickname\n\r")); //sends the nickname
-            @fwrite($fp, "USER $nickname USING WP IRC Plugin\n\r", strlen("USER $nickname USING WP IRC Plugin\n\r"));
+        // Connect to server
+        $socket = fsockopen($irc_server, $port, $errno, $errstr);
+        
+        // Return if failed
+        if(!$socket)
+        {
+            error_log("[WP-IRC] Could not connect to server");            
+            return null;
+        }
+        
+        // Login at server
+    if( strlen($password) > 0 )                                         // Password if given
+            IRC::send_irc_command($socket, "PASS $password"); 
+            
+        IRC::send_irc_command($socket, "NICK $nickname");               // Nickname
+        IRC::send_irc_command($socket, "USER $nickname 0 * WPIRC");     // RFC2812: <user> <mode> <unused> <realname>
 
-            $names = "";
-            while(!feof($fp)) //while we are connected to the server
+        // Receive package loop
+        while(IRC::connection_valid($socket)) 
+        {
+            // Read command
+            $messageData = fgets($socket, 512); // Max size (RFC2812)
+            $message = explode(' ', $messageData ); // Delimiter is space
+            
+            $prefix = "";
+            $command = "";
+            $target = "";
+            
+            // Invalid message
+            if( count($message) <= 0 )
+                continue;   
+
+            // Get prefix
+            if( strpos($message[0], ":") !== false )
             {
-                $server['READ_BUFFER'] = fgets($fp, 1024); //get a line of data from the server
-    //            echo "[RECIVE] ".$server['READ_BUFFER']."<br>\n\r"; //display the recived data from the server
-
-                //Now lets check to see if we have joined the server
-                if(strpos($server['READ_BUFFER'], "/MOTD")){
-                    //MOTD (The last thing displayed after a successful connection)
-                    //If we have joined the server
-                    @fwrite($fp, "LIST $channel\n\r", strlen("LIST $channel\n\r")); //get information about the chanel
-                }
-
-                if (strpos($server['READ_BUFFER'], "322")) { // Result for LIST Command
-                    preg_match("/$channel ([0-9]+)/", $server['READ_BUFFER'], $matches);
-    //            	echo "count : " . $matches[1] . "<br>\n\r";
-                    $count = $matches[1];
+                $prefix = $message[0];
+                array_splice($message, 0, 1);
+            }
+        
+            // Get command
+            $command = $message[0];
+            array_splice($message, 0, 1);
+            
+            // Get target
+            $target = $message[0];
+            array_splice($message, 0, 1);
+        
+            // Check if error
+            if( IRC::is_irc_command_error($command) )
+            {
+                error_log("[WP-IRC] ".$messageData);
+                return null;
+            }
+            
+            // Message handling
+            {
+                // End of MOTD
+                if( $command == "RPL_ENDOFMOTD" || intval($command) == 376 )
+                {
+                     if( $verbose ) // Server sends NAMES reply automatically on JOIN
+                        IRC::send_irc_command($socket, "JOIN $channel"); // JOIN channel
+                     else
+                        IRC::send_irc_command($socket, "NAMES $channel"); // Request NAMES           
                 }
                 
-                if(strpos($server['READ_BUFFER'], "/LIST")) { //End of LIST
-                    //Get the list of users from channel
-                    @fwrite($fp, "QUIT\n\r", strlen("QUIT\n\r")); //Quit the channel
-    //                @fwrite($fp, "NAMES $channel\n\r", strlen("NAMES $channel\n\r")); //get information about the chanel
+                // Result of NAMES request
+                if( $command == "RPL_NAMREPLY" || intval($command) == 353 )
+                {
+                    array_splice($message, 0, 1); // Ignore channel type 
+                    array_splice($message, 0, 1); // Ignore channel name
+                    
+                    // Iterate names
+                    foreach($message as $name)
+                    {
+                        // Remove introducing : on first name if neccesary
+                        if( strpos($name, ":") !== false )
+                            $name = substr($name, 1);
+                            
+                        // Remove flags
+                        if( strpos($name, "@") !== false || strpos($name, "+") !== false )
+                            $name = substr($name, 1);
+                            
+                        // Add if not self                        
+                        if( $name != $nickname )
+                            array_push($retVal, $name);
+                    }
                 }
-                //TODO: Need to get the list of people who are active. There seems to be some problem with the below code. Need to debug it
-    //            if (strpos($server['READ_BUFFER'], "353")) { // Result for NAMES Command
-    //            	$names .= substr($server['READ_BUFFER'], strpos($server['READ_BUFFER'], ":", 2) + 1);
-    //            }
-
-    //            if(strpos($server['READ_BUFFER'], "/NAMES")) { //End of Names
-                    //Quit the chanel
-    //                @fwrite($fp, "QUIT\n\r", strlen("QUIT\n\r"));
-    //            }
-
-                if(substr($server['READ_BUFFER'], 0, 6) == "PING :") {//If the server has sent the ping command
-                    //Reply with pong
-                    @fwrite($fp, "PONG :".substr($server['READ_BUFFER'], 6)."\n\r", strlen("PONG :" . substr($server['READ_BUFFER'], 6) . "\n\r"));
-                    //As you can see i dont have it reply with just "PONG"
-                    //It sends PONG and the data recived after the "PING" text on that recived line
-                    //Reason being is some irc servers have a "No Spoof" feature that sends a key after the PING
-                    //Command that must be replied with PONG and the same key sent.
-                }
-                flush(); //This flushes the output buffer forcing the text in the while loop to be displayed "On demand"
-            }
-        // close the socket
-        fclose($fp);
-        } else {
-            // If there is some error
-            //TODO:Include better error handling
+      
+                // End of NAMES request
+                if( $command == "RPL_ENDOFNAMES" || intval($command) == 366 )
+                {
+                    if( $verbose )
+                        IRC::send_irc_command($socket, "PART $channel"); // PART channel
+                        
+                    IRC::send_irc_command($socket, "QUIT"); // Close session
+                }  
+                
+                // Server acknoledged QUIT
+                if( $command == "ERROR")                
+                    break;
+            }   
         }
-        return $count;
+
+        // Close socket
+        fclose($socket); 
+        
+        return $retVal;
     }
 }
 ?>

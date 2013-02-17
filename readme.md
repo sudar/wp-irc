@@ -2,9 +2,9 @@
 Contributors: sudar 
 Tags: irc, sidebar, widget
 Requires at least: 3.2
-Tested up to: 3.5
+Tested up to: 3.5.1
 Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Stable tag: 1.0
+Stable tag: 1.1
 	
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 
@@ -57,7 +57,7 @@ After activation, go to the widgets configuration page. You should find the IRC 
 
 == Screenshots ==
 
-1. The following screenshot shows how the widget will be displayed
+1. Widget settings screen
 
 == Changelog ==
 
@@ -69,6 +69,12 @@ After activation, go to the widgets configuration page. You should find the IRC 
 
 ### v1.0 (2013-01-21) (Dev time: 20 hours)
 * Complete rewrite and added support for AJAX with caching
+
+### v1.1 (2013-02-17) (by Paul Freund)
+* Improved IRC connection (including implementing RFC2812  specifications)
+* [users] tag prints online users
+* Verbose mode to join channel (to see invisible users), 
+* Password now works
 
 ==Readme Generator== 
 

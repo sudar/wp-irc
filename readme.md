@@ -4,7 +4,7 @@ Tags: irc, sidebar, widget
 Requires at least: 3.2
 Tested up to: 3.5.1
 Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Stable tag: 1.1
+Stable tag: 1.2
 	
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 
@@ -75,6 +75,9 @@ After activation, go to the widgets configuration page. You should find the IRC 
 * [users] tag prints online users
 * Verbose mode to join channel (to see invisible users), 
 * Password now works
+
+### v1.2 (2013-02-21) (Dev time: 0.5 hours)
+*	Check if users is an array to prevent PHP warning
 
 ==Readme Generator== 
 

@@ -4,7 +4,7 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 1.1
+Version: 1.2
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
@@ -19,6 +19,8 @@ Author URI: http://sudarmuthu.com/
 					- [users] tag prints online users
 					- Verbose mode to join channel (to see invisible users), 
 					- Password now works
+2013-02-21 - v1.2 - (Dev time: 0.5 hours)
+                    - Check if users is an array to prevent PHP warning
 
 */
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
@@ -95,7 +97,9 @@ class WP_IRC {
         }
 
         $content = $instance['content'];
-        $content = str_replace("[users]", implode(" ",$users), $content);
+        if (is_array($users)) {
+            $content = str_replace("[users]", implode(" ",$users), $content);
+        }
         $content = str_replace("[count]", count($users), $content);
         $content = str_replace("[channel]", $instance["channel"], $content);
         $content = str_replace("[server]", $instance["server"], $content);
@@ -340,8 +344,7 @@ class IRC {
  * @param <type> $nickname
  * @return <type>
  */
-    static function is_irc_command_error($command)
-    {
+    static function is_irc_command_error($command) {
         if( intval($command) >= 400 && intval($command) <= 599 ) // 400 to 599 - Error commands
             return true;
             
@@ -351,30 +354,26 @@ class IRC {
         return false;
     }
  
-    static function send_irc_command($socket, $command)
-    {
+    static function send_irc_command($socket, $command) {
         $command = $command."\n\r";
         
         if($socket)
             @fwrite($socket, $command, strlen($command));
     }
     
-    static function connection_valid($socket)
-    {
+    static function connection_valid($socket) {
         flush(); 
         return feof($socket) ? false : true;
     }
  
-    static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot", $password = "", $verbose = false) 
-    {
+    static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot", $password = "", $verbose = false) {
         $retVal = array();
 
         // Connect to server
         $socket = fsockopen($irc_server, $port, $errno, $errstr);
         
         // Return if failed
-        if(!$socket)
-        {
+        if(!$socket) {
             error_log("[WP-IRC] Could not connect to server");            
             return null;
         }
@@ -387,8 +386,7 @@ class IRC {
         IRC::send_irc_command($socket, "USER $nickname 0 * WPIRC");     // RFC2812: <user> <mode> <unused> <realname>
 
         // Receive package loop
-        while(IRC::connection_valid($socket)) 
-        {
+        while(IRC::connection_valid($socket)) {
             // Read command
             $messageData = fgets($socket, 512); // Max size (RFC2812)
             $message = explode(' ', $messageData ); // Delimiter is space
@@ -402,8 +400,7 @@ class IRC {
                 continue;   
 
             // Get prefix
-            if( strpos($message[0], ":") !== false )
-            {
+            if( strpos($message[0], ":") !== false ) {
                 $prefix = $message[0];
                 array_splice($message, 0, 1);
             }
@@ -417,17 +414,15 @@ class IRC {
             array_splice($message, 0, 1);
         
             // Check if error
-            if( IRC::is_irc_command_error($command) )
-            {
+            if( IRC::is_irc_command_error($command) ) {
                 error_log("[WP-IRC] ".$messageData);
                 return null;
             }
             
-            // Message handling
+            // Message handling  
             {
                 // End of MOTD
-                if( $command == "RPL_ENDOFMOTD" || intval($command) == 376 )
-                {
+                if( $command == "RPL_ENDOFMOTD" || intval($command) == 376 ) {
                      if( $verbose ) // Server sends NAMES reply automatically on JOIN
                         IRC::send_irc_command($socket, "JOIN $channel"); // JOIN channel
                      else
@@ -435,14 +430,12 @@ class IRC {
                 }
                 
                 // Result of NAMES request
-                if( $command == "RPL_NAMREPLY" || intval($command) == 353 )
-                {
+                if( $command == "RPL_NAMREPLY" || intval($command) == 353 ) {
                     array_splice($message, 0, 1); // Ignore channel type 
                     array_splice($message, 0, 1); // Ignore channel name
                     
                     // Iterate names
-                    foreach($message as $name)
-                    {
+                    foreach($message as $name) {
                         // Remove introducing : on first name if neccesary
                         if( strpos($name, ":") !== false )
                             $name = substr($name, 1);
@@ -458,8 +451,7 @@ class IRC {
                 }
       
                 // End of NAMES request
-                if( $command == "RPL_ENDOFNAMES" || intval($command) == 366 )
-                {
+                if( $command == "RPL_ENDOFNAMES" || intval($command) == 366 ) {
                     if( $verbose )
                         IRC::send_irc_command($socket, "PART $channel"); // PART channel
                         

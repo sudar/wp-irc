@@ -79,6 +79,6 @@ After activation, go to the widgets configuration page. You should find the IRC 
 ### v1.2 (2013-02-21) (Dev time: 0.5 hours)
 *	Check if users is an array to prevent PHP warning
 
-##Readme Generator## 
+## Readme Generator 
 
 This Readme file was generated using <a href = 'http://sudarmuthu.com/wordpress/wp-readme'>wp-readme</a>, which generates readme files for WordPress Plugins.

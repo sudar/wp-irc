@@ -1,14 +1,14 @@
-=== wp-irc ===
-Contributors: sudar 
-Tags: irc, sidebar, widget
-Requires at least: 3.2
-Tested up to: 3.5.1
-Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Stable tag: 1.2
+# wp-irc #
+**Contributors:** sudar 
+**Tags:** irc, sidebar, widget
+**Requires at least:** 3.2
+**Tested up to:** 3.5.1
+**Donate Link:** http://sudarmuthu.com/if-you-wanna-thank-me
+**Stable tag:** 1.2
 	
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 
-== Description ==
+## Description ##
 
 Well WP-IRC Plugin (for lack of a better name ;) ) can fetch the number of users online in any IRC channel and can be scheduled to auto refresh it every x.minutes. The count thus fetched can be displayed in the sidebar of your blog using a sidebar widget provided by the Plugin.
 
@@ -49,17 +49,17 @@ I would be posting updates about this Plugin in my [blog][3] and in [Twitter][2]
  [5]: http://sudarmuthu.com/feed
  [6]: https://github.com/sudar/wp-irc
 
-== Installation ==
+## Installation ##
 
 Extract the zip file and just drop the contents in the wp-content/plugins/ directory of your WordPress installation and then activate the Plugin from Plugins page.
 
 After activation, go to the widgets configuration page. You should find the IRC Widget under available widget.
 
-== Screenshots ==
+## Screenshots ##
 
 1. Widget settings screen
 
-== Changelog ==
+## Changelog ##
 
 ### v0.1 (2009-07-29)
 *   Initial Version
@@ -79,6 +79,6 @@ After activation, go to the widgets configuration page. You should find the IRC 
 ### v1.2 (2013-02-21) (Dev time: 0.5 hours)
 *	Check if users is an array to prevent PHP warning
 
-==Readme Generator== 
+##Readme Generator## 
 
 This Readme file was generated using <a href = 'http://sudarmuthu.com/wordpress/wp-readme'>wp-readme</a>, which generates readme files for WordPress Plugins.

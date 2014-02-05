@@ -9,7 +9,7 @@ License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
 Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
-Text Domain: bulk-delete
+Text Domain: wp-irc
 Domain Path: languages/
 
 === RELEASE NOTES ===

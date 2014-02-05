@@ -1,5 +1,8 @@
 ## Changelog ##
 
+### v1.2.1 (2014-02-05) (Dev time: 0.5 hours)
+- Tweak: Update Screenshots
+
 ### v1.2 (2013-02-21) (Dev time: 0.5 hours)
 *	Check if users is an array to prevent PHP warning
 

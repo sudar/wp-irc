@@ -61,6 +61,10 @@ After activation, go to the widgets configuration page. You should find the IRC 
 
 Widget settings screen
 
+![](screenshot-2.png)
+
+This is how the widget will appear in the frontend
+
 ## Readme Generator 
 
 This Readme file was generated using <a href = 'http://sudarmuthu.com/wordpress/wp-readme'>wp-readme</a>, which generates readme files for WordPress Plugins.

@@ -137,7 +137,7 @@ class IRC_Widget extends WP_Widget {
     public function __construct() {
         parent::__construct(
             'irc_widget', // Base ID
-            'IRC_Widget', // Name
+            __( 'WP irc Widget' ), // Name
             array( 'description' => __( 'An IRC Widget', 'wp-irc' ), ) // Args
         );
     }
@@ -361,6 +361,11 @@ class IRC {
  
     static function get_irc_channel_users($irc_server, $port, $channel, $nickname = "wp-irc-bot", $password = "", $verbose = false) {
         $retVal = array();
+
+        // Check if channel has # in front or not
+        if ( '#' != $channel[0] ) {
+            $channel = '#' . $channel;
+        }
 
         // Connect to server
         $socket = fsockopen($irc_server, $port, $errno, $errstr);

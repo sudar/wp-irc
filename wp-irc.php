@@ -1,5 +1,5 @@
 <?php
-/*
+/**
 Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
@@ -8,21 +8,14 @@ Version: 1.2
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
+Donate Link: http://sudarmuthu.com/if-you-wanna-thank-me
+Text Domain: bulk-delete
+Domain Path: languages/
 
 === RELEASE NOTES ===
-2009-07-29 - v0.1 - first version
-2012-01-31 - v0.2 - Fixed issue with textarea in the widget
-2013-01-21 - v1.0 - (Dev Time: 20 hours)
-                  - Complete rewrite and added support for AJAX with caching
-2013-02-16 - v1.1 - (Paul Freund) 	- Fixed misspelled vairiables
-					- Improved IRC connection (including implementing RFC2812  specifications)
-					- [users] tag prints online users
-					- Verbose mode to join channel (to see invisible users), 
-					- Password now works
-2013-02-21 - v1.2 - (Dev time: 0.5 hours)
-                    - Check if users is an array to prevent PHP warning
-
+Check readme file for full release notes
 */
+
 /*  Copyright 2009  Sudar Muthu  (email : sudar@sudarmuthu.com)
 
     This program is free software; you can redistribute it and/or modify

@@ -1,11 +1,11 @@
 # wp-irc #
-**Contributors:** sudar 
-**Tags:** irc, sidebar, widget
-**Requires at least:** 3.2
-**Tested up to:** 3.5.1
-**Donate Link:** http://sudarmuthu.com/if-you-wanna-thank-me
-**Stable tag:** 1.2
-	
+**Contributors:** sudar  
+**Tags:** irc, sidebar, widget  
+**Requires at least:** 3.2  
+**Tested up to:** 3.5.1  
+**Donate Link:** http://sudarmuthu.com/if-you-wanna-thank-me  
+**Stable tag:** 1.2  
+
 Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
 
 ## Description ##
@@ -57,27 +57,9 @@ After activation, go to the widgets configuration page. You should find the IRC 
 
 ## Screenshots ##
 
-1. Widget settings screen
+![](screenshot-1.png)
 
-## Changelog ##
-
-### v0.1 (2009-07-29)
-*   Initial Version
-
-### v0.2 (2012-01-31)
-*   Fixed issue with textarea in the widget
-
-### v1.0 (2013-01-21) (Dev time: 20 hours)
-* Complete rewrite and added support for AJAX with caching
-
-### v1.1 (2013-02-17) (by Paul Freund)
-* Improved IRC connection (including implementing RFC2812  specifications)
-* [users] tag prints online users
-* Verbose mode to join channel (to see invisible users), 
-* Password now works
-
-### v1.2 (2013-02-21) (Dev time: 0.5 hours)
-*	Check if users is an array to prevent PHP warning
+Widget settings screen
 
 ## Readme Generator 
 

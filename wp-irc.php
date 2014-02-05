@@ -4,7 +4,7 @@ Plugin Name: WP IRC
 Plugin Script: wp-irc.php
 Plugin URI: http://sudarmuthu.com/wordpress/wp-irc
 Description: Retrieves the number of people who are online in an IRC Channel, which can be displayed in the sidebar using a widget.
-Version: 1.2
+Version: 1.2.1
 License: GPL
 Author: Sudar
 Author URI: http://sudarmuthu.com/ 
@@ -47,9 +47,9 @@ set_time_limit(0);
  */
 class WP_IRC {
 
-    private $version = "0.3";
-    private $js_handle = "wp-irc";
-    private $js_variable = "WPIRC";
+    private $version       = '1.2.1';
+    private $js_handle     = "wp-irc";
+    private $js_variable   = "WPIRC";
     private $refresh_nonce = "wp-irc-refresh-count";
 
     /**
@@ -377,7 +377,7 @@ class IRC {
         }
         
         // Login at server
-    if( strlen($password) > 0 )                                         // Password if given
+        if( strlen($password) > 0 )                                     // Password if given
             IRC::send_irc_command($socket, "PASS $password"); 
             
         IRC::send_irc_command($socket, "NICK $nickname");               // Nickname
